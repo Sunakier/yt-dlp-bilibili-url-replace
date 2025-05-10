@@ -110,23 +110,18 @@ class BilibiliBaseIE(InfoExtractor):
 
         # Check if the option is enabled
         if self.get_param('bilibili_backup_url_for_pcdn', False):
-            # Safely get the 'durl' list from play_info
-            # This ensures durl_list is either a list or None
             durl_list = traverse_obj(play_info, ('durl', lambda _, v: v if isinstance(v, list) else None))
             if durl_list:
                 for durl_entry in durl_list:
-                    # Ensure the entry itself is a dictionary before processing
                     if not isinstance(durl_entry, dict):
                         continue
                     original_url = traverse_obj(durl_entry, ('url', {str_or_none}))
-                    # Condition: original_url exists, contains 'mcdn.bilivideo.cn'
                     if not (original_url and 'mcdn.bilivideo.cn' in original_url):
                         continue
-                    # Safely get the first backup URL string
                     first_backup_url_str = traverse_obj(durl_entry, ('backup_url', 0, {str_or_none}))
-                    if not first_backup_url_str: # Handles None or empty string from str_or_none
+                    if not first_backup_url_str:
                         continue
-                    new_url = url_or_none(first_backup_url_str) # Validates and cleans the URL
+                    new_url = url_or_none(first_backup_url_str)
                     if new_url:
                         durl_entry['url'] = new_url
                         self.to_screen(f'Bilibili: Using backup URL {new_url} for PCDN content.')
