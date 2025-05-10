@@ -116,8 +116,8 @@ class BilibiliBaseIE(InfoExtractor):
                     original_url = durl_entry.get('url')
                     # backup_url is expected to be a list of strings
                     backup_urls = durl_entry.get('backup_url')
-                    if (original_url and 'mcdn.bilivideo.cn' in original_url and
-                            backup_urls and isinstance(backup_urls, list) and backup_urls):
+                    if (original_url and 'mcdn.bilivideo.cn' in original_url
+                            and backup_urls and isinstance(backup_urls, list) and backup_urls):
                         # Use the first URL from backup_url list
                         first_backup_url = backup_urls[0]
                         if isinstance(first_backup_url, str):
