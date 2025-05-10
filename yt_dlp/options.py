@@ -1980,6 +1980,11 @@ def create_parser():
         '--youtube-skip-hls-manifest', '--no-youtube-include-hls-manifest',
         action='store_false', dest='youtube_include_hls_manifest',
         help=optparse.SUPPRESS_HELP)
+    extractor.add_option(
+        '--bilibili-backup-url-for-pcdn',
+        action='store_true', dest='bilibili_backup_url_for_pcdn', default=False,
+        help='If the main URL for a Bilibili video is from a PCDN network (mcdn.bilivideo.cn), '
+                 'use one of the backup URLs instead, if available. (Experimental)')
 
     parser.add_option_group(general)
     parser.add_option_group(network)
