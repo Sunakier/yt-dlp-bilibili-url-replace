@@ -67,6 +67,16 @@ class BilibiliBaseIE(InfoExtractor):
                 f'Format(s) {missing_formats} are missing; you have to '
                 f'become a premium member to download them. {self._login_hint()}')
 
+    def fix_url(self, obj) -> str:
+        fixed_url = url_or_none(traverse_obj(obj, 'baseUrl', 'base_url', 'url'))
+        if self.get_param('bilibili_backup_url_for_pcdn', False) and 'mcdn.bilivideo.cn' in fixed_url:
+            backupurl_list = traverse_obj(obj, ('backup_url'))
+            if not backupurl_list:
+                backupurl_list = traverse_obj(obj, ('backupUrl'))
+            if backupurl_list:
+                fixed_url = url_or_none(random.choice(backupurl_list))
+        return fixed_url
+
     def extract_formats(self, play_info):
         format_names = {
             r['quality']: traverse_obj(r, 'new_description', 'display_desc')
@@ -78,7 +88,7 @@ class BilibiliBaseIE(InfoExtractor):
         if flac_audio:
             audios.append(flac_audio)
         formats = [{
-            'url': traverse_obj(audio, 'baseUrl', 'base_url', 'url'),
+            'url': self.fix_url(audios),
             'ext': mimetype2ext(traverse_obj(audio, 'mimeType', 'mime_type')),
             'acodec': traverse_obj(audio, ('codecs', {str.lower})),
             'vcodec': 'none',
@@ -87,18 +97,8 @@ class BilibiliBaseIE(InfoExtractor):
             'format_id': str_or_none(audio.get('id')),
         } for audio in audios]
 
-        def fix_url(video) -> str:
-            fixed_url = url_or_none(traverse_obj(video, 'baseUrl', 'base_url', 'url'))
-            if self.get_param('bilibili_backup_url_for_pcdn', False) and 'mcdn.bilivideo.cn' in fixed_url:
-                backupurl_list = traverse_obj(video, ('backup_url'))
-                if not backupurl_list:
-                    backupurl_list = traverse_obj(video, ('backupUrl'))
-                if backupurl_list:
-                    fixed_url = url_or_none(random.choice(backupurl_list))
-            return fixed_url
-
         formats.extend({
-            'url': fix_url(video),
+            'url': self.fix_url(video),
             'ext': mimetype2ext(traverse_obj(video, 'mimeType', 'mime_type')),
             'fps': float_or_none(traverse_obj(video, 'frameRate', 'frame_rate')),
             'width': int_or_none(video.get('width')),
