@@ -930,6 +930,7 @@ def parse_options(argv=None):
         'extractor_args': opts.extractor_args,
         'youtube_include_dash_manifest': opts.youtube_include_dash_manifest,
         'youtube_include_hls_manifest': opts.youtube_include_hls_manifest,
+        'bilibili_backup_url_for_pcdn': opts.bilibili_backup_url_for_pcdn,
         'encoding': opts.encoding,
         'extract_flat': opts.extract_flat,
         'live_from_start': opts.live_from_start,

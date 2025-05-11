@@ -1982,7 +1982,7 @@ def create_parser():
         help=optparse.SUPPRESS_HELP)
     extractor.add_option(
         '--bilibili-backup-url-for-pcdn',
-        action='store_true', dest='bilibili_backup_url_for_pcdn', default=False,
+        action='store_true', dest='bilibili_backup_url_for_pcdn', default=True,
         help='If the main URL for a Bilibili video is from a PCDN network (mcdn.bilivideo.cn), '
         'use one of the backup URLs instead, if available. (Experimental)')
 

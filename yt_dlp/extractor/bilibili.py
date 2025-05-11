@@ -87,8 +87,18 @@ class BilibiliBaseIE(InfoExtractor):
             'format_id': str_or_none(audio.get('id')),
         } for audio in audios]
 
+        def fix_url(video) -> str:
+            fixed_url = url_or_none(traverse_obj(video, 'baseUrl', 'base_url', 'url'))
+            if self.get_param('bilibili_backup_url_for_pcdn', False) and 'mcdn.bilivideo.cn' in fixed_url:
+                backupurl_list = traverse_obj(video, ('backup_url'))
+                if not backupurl_list:
+                    backupurl_list = traverse_obj(video, ('backupUrl'))
+                if backupurl_list:
+                    fixed_url = url_or_none(random.choice(backupurl_list))
+            return fixed_url
+
         formats.extend({
-            'url': traverse_obj(video, 'baseUrl', 'base_url', 'url'),
+            'url': fix_url(video),
             'ext': mimetype2ext(traverse_obj(video, 'mimeType', 'mime_type')),
             'fps': float_or_none(traverse_obj(video, 'frameRate', 'frame_rate')),
             'width': int_or_none(video.get('width')),
@@ -108,8 +118,8 @@ class BilibiliBaseIE(InfoExtractor):
         if formats:
             self._check_missing_formats(play_info, formats)
 
-        # Check if the option is enabled
         if self.get_param('bilibili_backup_url_for_pcdn', False):
+            # Process durl entries
             durl_list = traverse_obj(play_info, ('durl', lambda _, v: v if isinstance(v, list) else None))
             if durl_list:
                 for durl_entry in durl_list:
@@ -118,13 +128,40 @@ class BilibiliBaseIE(InfoExtractor):
                     original_url = traverse_obj(durl_entry, ('url', {str_or_none}))
                     if not (original_url and 'mcdn.bilivideo.cn' in original_url):
                         continue
+                    # Try 'backup_url' first
                     first_backup_url_str = traverse_obj(durl_entry, ('backup_url', 0, {str_or_none}))
+                    # If not found, try 'backupUrl'
+                    if not first_backup_url_str:
+                        first_backup_url_str = traverse_obj(durl_entry, ('backupUrl', 0, {str_or_none}))
+
                     if not first_backup_url_str:
                         continue
                     new_url = url_or_none(first_backup_url_str)
                     if new_url:
                         durl_entry['url'] = new_url
                         self.to_screen(f'Bilibili: Using backup URL {new_url} for PCDN content.')
+
+            # PCDN video backup URL logic is now integrated into the main format generation for dash videos.
+
+            # Process dash audio entries
+            for audio in audios:
+                original_url = traverse_obj(audio, ('baseUrl', 'base_url', {str_or_none}))
+                if not (original_url and 'mcdn.bilivideo.cn' in original_url):
+                    continue
+                # Try 'backup_url' first
+                first_backup_url_str = traverse_obj(audio, ('backup_url', 0, {str_or_none}))
+                # If not found, try 'backupUrl'
+                if not first_backup_url_str:
+                    first_backup_url_str = traverse_obj(audio, ('backupUrl', 0, {str_or_none}))
+                if not first_backup_url_str:
+                    continue
+                new_url = url_or_none(first_backup_url_str)
+                if new_url:
+                    if 'baseUrl' in audio:
+                        audio['baseUrl'] = new_url
+                    elif 'base_url' in audio:
+                        audio['base_url'] = new_url
+                    self.to_screen(f'Bilibili: Using backup URL {new_url} for PCDN audio content.')
 
         fragments = traverse_obj(play_info, ('durl', lambda _, v: url_or_none(v['url']), {
             'url': ('url', {url_or_none}),
