@@ -88,7 +88,7 @@ class BilibiliBaseIE(InfoExtractor):
         if flac_audio:
             audios.append(flac_audio)
         formats = [{
-            'url': self.fix_url(audios),
+            'url': self.fix_url(audio),
             'ext': mimetype2ext(traverse_obj(audio, 'mimeType', 'mime_type')),
             'acodec': traverse_obj(audio, ('codecs', {str.lower})),
             'vcodec': 'none',
